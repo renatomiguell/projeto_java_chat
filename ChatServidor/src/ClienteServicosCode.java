@@ -6,8 +6,17 @@ public class ClienteServicosCode implements ClienteServicos {
 	private int cliente_id;
 	private String cliente_nickname;
 	private String mensagem;
+	private String data_hora;
 	
 	// Criando os métodos Getters e Setters.
+	public String get_data_hora() {
+		return data_hora;
+	}
+
+	public void set_data_hora(String data_hora) {
+		this.data_hora = data_hora;
+	}
+	
 	public void set_mensagem(String mensagem) throws RemoteException{
 		this.mensagem = mensagem;
 	}
@@ -38,7 +47,7 @@ public class ClienteServicosCode implements ClienteServicos {
 	// Criando o método "toString".
 	public String toString() {
 		try {
-			return get_mensagem();
+			return "(" + get_data_hora() + ") - " + "@" + get_cliente_nickname() + "_" + get_cliente_id() + ": " + get_mensagem();
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
