@@ -1,40 +1,36 @@
 import java.rmi.*;
-import java.rmi.server.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.rmi.registry.*;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.*;
 import com.mysql.jdbc.Connection;
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
-import java.text.DateFormat;
 
 // Esta classe possui as funções do servidor, que são as sequintes: Enviar Mensagem, Entrar no Chat, Sair do Chat, Verificar se existe um Cliente, Inserir log de dados no Banco e Consultar todos os dados do Banco.
 public class ServidorServicosCode implements ServidorServicos {
 	
 	// Criando a lista que exibe as mensagens durante uma conversa no chat.
 	public List<ClienteServicos> client_list = new ArrayList<ClienteServicos>();
-	// Inicia a variável que era os ids.
-	public static int clientids=0;
-	// Cria um objeto "date".
-	public Date date = new Date();
-	// Converte a data em string:
-	public String modifiedDateTime= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
-	public String modifiedDate= new SimpleDateFormat("yyyy-MM-dd").format(date);
-
+	// Inicia a variável que gera os ids randomicamente.
+	public int clientids= (int)(1000 + Math.random() * 10000 - 1000 + 1);
+	private DateTimeFormatter formatter;
+	
 	// Função que envia as mensagens.
 	public void enviar_mensagem(String mensagem, ClienteServicos cliente) throws RemoteException {
 
 			//Processa as menssagens.
 			for (ClienteServicos cli : client_list ){
+				formatter = DateTimeFormatter.ofLocalizedDateTime( FormatStyle.SHORT ).withLocale( Locale.UK ).withZone( ZoneId.systemDefault() );
 				
 				// No terminal do cliente não repete a mensagem enviada por ele mesmo.
 				if(cliente.get_cliente_id() == cli.get_cliente_id()){
+					cli.receber_mensagem("(" + formatter.format( Instant.now() ) + ") - " +mensagem);
 				}
 				// Se outros clientes estiverem conectados ao chat, recebem a mensagem.
 				else{
-					cli.receber_mensagem(mensagem);
+					cli.receber_mensagem("(" + formatter.format( Instant.now() ) + ") - " +mensagem);
 				}
 			}
 	}
@@ -96,12 +92,13 @@ public class ServidorServicosCode implements ServidorServicos {
 			statement.setInt(1, pessoaDTO.get_cliente_id());
 			statement.setString(2, pessoaDTO.get_cliente_nickname());
 			statement.setString(3, pessoaDTO.get_mensagem());
-			statement.setString(4, modifiedDateTime);
+			statement.setString(4, pessoaDTO.get_data_hora());
 			
 			// Executa a inserção.
 			statement.execute();
 			// Fecha a conexão com o Banco.
 			connection.close();
+			statement.close();
 		
 		// Caso aconteça um erro com a conexão, uma exceção é lançada.
 		}catch (Exception e) {
@@ -120,7 +117,7 @@ public class ServidorServicosCode implements ServidorServicos {
 			Connection connection = (Connection) ConexaoUtil.getInstance().getConnection();
 			
 			// String que contém o código sql que vai ser executado no Banco. Consultando os dados.
-			String sql = "SELECT * FROM conversas";
+			String sql = "SELECT cliente_id, cliente_nickname, mensagem, DATE_FORMAT(data_hora, '%y/%m/%d %H:%i') AS data_hora_formatada FROM conversas";
 			
 			// Conecta fazendo a ponte entre o Java e o Banco.
 			PreparedStatement statement = connection.prepareStatement(sql);
@@ -138,6 +135,8 @@ public class ServidorServicosCode implements ServidorServicos {
 				pessoaDTO.set_cliente_nickname(resultset.getString("cliente_nickname"));
 				// Obtendo as mensagens.
 				pessoaDTO.set_mensagem(resultset.getString("mensagem"));
+				// Obtendo a data e hora das mensagens.
+				pessoaDTO.set_data_hora(resultset.getString("data_hora_formatada"));
 				
 				// Adiciona os dados na lista. 
 				listaPessoas.add(pessoaDTO);
@@ -145,6 +144,8 @@ public class ServidorServicosCode implements ServidorServicos {
 			
 			// Fecha a conexão com o Banco.
 			connection.close();
+			statement.close();
+			resultset.close();
 		
 		// Caso aconteça um erro com a conexão, uma exceção é lançada.
 		}catch (Exception e) {

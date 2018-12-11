@@ -21,7 +21,7 @@ public class ConexaoUtil {
 		// Driver da conexão com MYSQL.
 		Class.forName("com.mysql.jdbc.Driver");
 		
-		// Retorna a conexão.
+		// Retorna a conexão. Após (banco_conversas) no link foi usado esse comando para o java tratar as datas e horas zeradas(0000-00-00 00:00:00) como null.
 		return DriverManager.getConnection("jdbc:mysql://localhost:3306/banco_conversas", "root", "");
 	}
 	

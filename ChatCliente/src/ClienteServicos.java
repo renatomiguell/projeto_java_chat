@@ -9,5 +9,7 @@ public interface ClienteServicos extends Remote{
 	public String get_cliente_nickname() throws RemoteException;
 	public void set_mensagem(String mensagem) throws RemoteException;
 	public String get_mensagem() throws RemoteException;
+	public void set_data_hora(String data_hora) throws RemoteException;
+	public String get_data_hora() throws RemoteException;
 	
 }

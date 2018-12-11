@@ -1,7 +1,12 @@
 import java.rmi.*;
 import java.rmi.registry.*;
 import java.util.*;
+import javax.swing.JOptionPane;
 import java.rmi.server.*;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 
 public class Cliente implements Runnable {
 	
@@ -11,7 +16,14 @@ public class Cliente implements Runnable {
 	public static ClienteServicosCode cliente;
 	public static ClienteServicos cli;
 	public int status=0;
-
+	private DateTimeFormatter formatter;
+	
+	/**
+	// Cria um objeto "date".
+	public Date date = new Date();
+	// Converte a data em string:
+	public String modifiedDateTime= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
+	**/
 	// Método Main
 	public static void main(String [] args) {
 		
@@ -44,37 +56,38 @@ public class Cliente implements Runnable {
 		}
 
 	}
-	
-	// 
-	public String combine_message(String[] mensagem){
-		String mes=" ";
-		for(int i = 2; i < mensagem.length; i++){
-			mes += mensagem[i];
-			mes +=" ";
-		}
-		return mes;
-	}
 
 	// Método run do Runnable. 
-	public void run(){
-		
-		// Recebe a entrada do usuário. 
-		Scanner input = new Scanner(System.in);
-		// E atribui o valor recebido à variável "opcao".
-		String opcao;
+	public void run() {
 		
 		while(true){
-			// 
-			opcao= input.nextLine();
-			String split[] = opcao.split(" ");
-			// 
-			String op_digitada=split[0];
+			String opcao;
 			String resposta="";
-			// 
+			
+			opcao= JOptionPane.showInputDialog(null, "Digite: ");
+			
+			String split[] = opcao.split(" ");
+			
+			if(opcao=="" || opcao.equals("/sair")) {
+				try {
+					resposta = servidor.sair(cli);
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} 
+				System.out.println(resposta);
+				break;
+			}
+			
+			
+			String op_digitada=split[0];
+		
+			/**
 			if(op_digitada==""|| op_digitada==null || split.length<1){
 				System.out.println("Por favor, digite um comando ou mensagem válidos.");
-			break;
-			}
+				break;
+			}**/
+
 
 			try{
 				// 
@@ -119,7 +132,7 @@ public class Cliente implements Runnable {
 							System.out.println(listaPessoas.get(i));
 						}
 						break;
-						
+					
 					// Se a entrada do usuário for "SAIR" corretamente, ele entra no case:
 					case "SAIR":
 						// Se o "status" for 1, quer dizer que o usuário estava utilizando o chat. Portanto ele entra no "if" e finaliza a seção do usuário.
@@ -140,6 +153,7 @@ public class Cliente implements Runnable {
 						// Se o "status" for 1, quer dizer que o usuário estava utilizando o chat e entra no "if":
 						if(status!=0){
 							
+							formatter = DateTimeFormatter.ofLocalizedDateTime( FormatStyle.SHORT ).withLocale( Locale.UK ).withZone( ZoneId.systemDefault() );
 							// 
 							String mensagem = "@" + nickname + ": " + opcao;
 							// Chama a função do servidor que envia a mensagem do usuário.
@@ -152,7 +166,8 @@ public class Cliente implements Runnable {
 							// Seta todas as informações do usuário: id, nome, mensagem.
 							pessoaDTO.set_cliente_id(cliente.get_cliente_id());
 							pessoaDTO.set_cliente_nickname(cliente.get_cliente_nickname());
-							pessoaDTO.set_mensagem(mensagem);
+							pessoaDTO.set_data_hora(formatter.format( Instant.now() ));
+							pessoaDTO.set_mensagem(opcao);
 							
 							// Chama a função do servidor para inserir os dados no Banco.
 							pessoaDAO.inserir(pessoaDTO);
